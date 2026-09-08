@@ -129,4 +129,4 @@ py src/hash_sources.py data/private --output work/source-manifest.csv
 
 学習・検証用のPoCです。診療報酬請求、算定可否判定、患者情報の処理には使用できません。制度・マスターは更新されるため、実利用時は必ず最新の公式資料を確認してください。
 
-公開前は [`docs/publishing-checklist.md`](docs/publishing-checklist.md) を確認してください。ライセンスは利用条件を本人が決めてから追加するため、現時点では同梱していません。
+公開・更新時の確認事項は [`docs/publishing-checklist.md`](docs/publishing-checklist.md) に記録しています。利用条件は検討中のため、現時点ではライセンスを設定していません。
