@@ -1,0 +1,28 @@
+# Private source data and downloaded documents
+data/private/
+data/master/
+data/policy/
+data/revision/
+*.db
+*.sqlite
+*.sqlite3
+
+# Generated files
+work/
+text/
+source-manifest.csv
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Secrets and editor files
+.env
+.env.*
+.vscode/
+.idea/
+.DS_Store
+

@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>レセプト電算マスター図鑑</title>
+<style>
+  :root{
+    --paper:#F2F4F1;
+    --rule:#C3D0CB;
+    --rule-soft:#DEE6E1;
+    --ink:#1C2B33;
+    --ink-soft:#5A6B72;
+    --shu:#A6362C;
+    --ai:#3D6C86;
+    --mincho:"Hiragino Mincho ProN","Yu Mincho","YuMincho","MS PMincho",serif;
+    --gothic:"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+    --mono:"SFMono-Regular",Menlo,Consolas,"Courier New",monospace;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--gothic);font-size:15px;line-height:1.85;
+    font-feature-settings:"palt";
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:820px;margin:0 auto;padding:0 24px 120px}
+
+  /* ── 表紙 ───────────────────────────── */
+  header{padding:72px 0 40px}
+  h1{
+    font-family:var(--mincho);font-weight:600;
+    font-size:clamp(30px,5.4vw,46px);line-height:1.3;
+    letter-spacing:.04em;margin:0 0 18px;
+  }
+  .lede{max-width:44em;color:var(--ink-soft);font-size:15px;margin:0}
+  .lede b{color:var(--ink);font-weight:600}
+
+  /* ── レコード標本 ───────────────────── */
+  .specimen{
+    margin:44px 0 0;border-top:2px solid var(--ink);
+    border-bottom:1px solid var(--rule);padding:22px 0 26px;
+  }
+  .specimen .cap{
+    font-family:var(--mincho);font-size:14px;color:var(--ink-soft);
+    margin:0 0 16px;
+  }
+  .rec{
+    font-family:var(--mono);font-size:12.5px;line-height:2.5;
+    word-break:break-all;color:var(--ink-soft);
+    background:#fff;border:1px solid var(--rule-soft);
+    padding:14px 16px;border-radius:2px;
+  }
+  .rec i{font-style:normal;color:var(--ink);font-weight:700;
+    box-shadow:inset 0 -7px 0 rgba(61,108,134,.16);padding:0 1px}
+  .keys{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));
+    gap:2px 26px;margin-top:18px;
+  }
+  .keys div{
+    display:flex;gap:10px;align-items:baseline;
+    font-size:13.5px;padding:5px 0;border-bottom:1px dotted var(--rule);
+  }
+  .keys span{
+    font-family:var(--mono);font-size:11.5px;color:var(--ai);
+    flex:0 0 3.4em;letter-spacing:.02em;
+  }
+
+  /* ── 節 ─────────────────────────────── */
+  section{margin-top:64px}
+  h2{
+    font-family:var(--mincho);font-size:23px;font-weight:600;
+    letter-spacing:.03em;margin:0 0 6px;padding-bottom:10px;
+    border-bottom:1px solid var(--rule);
+  }
+  .sub{color:var(--ink-soft);font-size:13.5px;margin:0 0 26px}
+  p{margin:0 0 18px}
+  h3{
+    font-family:var(--mincho);font-size:17.5px;font-weight:600;
+    margin:38px 0 10px;letter-spacing:.02em;
+  }
+  h3 em{
+    font-style:normal;font-family:var(--mono);font-size:12px;
+    color:var(--ai);margin-right:.7em;letter-spacing:0;
+  }
+
+  /* ── 表 ─────────────────────────────── */
+  table{
+    width:100%;border-collapse:collapse;margin:8px 0 20px;
+    font-size:14px;font-variant-numeric:tabular-nums;
+  }
+  caption{
+    text-align:left;font-size:12.5px;color:var(--ink-soft);
+    padding-bottom:7px;
+  }
+  th{
+    text-align:left;font-weight:600;font-size:12.5px;color:var(--ink-soft);
+    border-bottom:1.5px solid var(--ink);padding:6px 10px 6px 0;
+  }
+  td{border-bottom:1px solid var(--rule-soft);padding:8px 10px 8px 0;
+     vertical-align:top}
+  td.n,th.n{text-align:right;font-family:var(--mono);font-size:13px;
+     padding-right:0}
+  tr.void td{color:var(--shu)}
+  .mono{font-family:var(--mono);font-size:13px}
+
+  /* ── 数値の据わり ───────────────────── */
+  .figure{
+    display:flex;gap:30px;align-items:baseline;flex-wrap:wrap;
+    margin:22px 0 6px;padding:16px 0;
+    border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+  }
+  .figure b{
+    font-family:var(--mincho);font-size:38px;font-weight:600;
+    line-height:1;letter-spacing:.01em;font-variant-numeric:tabular-nums;
+  }
+  .figure small{font-size:13.5px;color:var(--ink-soft);line-height:1.7;
+    max-width:32em;display:block}
+  .figure.void b{color:var(--shu)}
+
+  /* ── 注記 ───────────────────────────── */
+  .note{
+    border-left:3px solid var(--ai);padding:2px 0 2px 16px;
+    font-size:14px;color:var(--ink-soft);margin:20px 0;
+  }
+  .note.warn{border-left-color:var(--shu)}
+  .note b{color:var(--ink)}
+  .status{
+    margin:26px 0 0;padding:14px 16px;border:1px solid var(--rule);
+    background:#fff;font-size:13.5px;color:var(--ink-soft);
+  }
+  .status b{color:var(--ink)}
+  .tag{
+    display:inline-block;font-family:var(--mono);font-size:10.5px;
+    letter-spacing:.04em;border:1px solid currentColor;padding:1px 6px;
+    margin-right:7px;vertical-align:1px;
+  }
+  .tag.fact{color:var(--ai)}
+  .tag.inference{color:var(--shu)}
+
+  footer{
+    margin-top:76px;padding-top:22px;border-top:2px solid var(--ink);
+    font-size:12.5px;color:var(--ink-soft);
+  }
+  footer p{margin:0 0 8px}
+  code{font-family:var(--mono);font-size:12.5px;
+    background:rgba(61,108,134,.09);padding:1px 5px;border-radius:2px}
+  @media print{body{background:#fff}.wrap{max-width:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>レセプト電算マスター図鑑</h1>
+  <p class="lede">厚生労働省の診療報酬情報提供サービス等から取得した5つの配布ファイルを、
+  実データで数えた記録。<b>行為・病名・修飾語では、廃止や移行の表現方法が異なる</b>。
+  同じレセプト電算処理で使われるマスターの違いを観察する。</p>
+  <div class="status"><b>公開版 v0.2（2026-09-08監査）</b><br>
+  医科診療行為は令和6年度版の最終期、傷病名・修飾語は2026年6月1日更新版を使用。
+  数値の再現と、その理由についての解釈を分けて表示する。医療機関の算定可否を保証する資料ではない。</div>
+</header>
+
+<div class="specimen">
+  <p class="cap">標本：医科診療行為マスターの1レコード（150列のうち、値の入っている列だけを抜いた）</p>
+  <div class="rec">
+    0,S,<i>180745310</i>,32,脳血管疾患等リハビリテーション料（１）（理学療法士による場合）,…,<i>28</i>,1,単位,3,<i>245.00</i>,…,1,<i>1</i>,<i>9</i>,<i>1</i>,245.00,<i>1</i>,…,8043,…,<i>732</i>,0,0,0,0,0,0,0,0,0,…,<i>H</i>,…,2,07,<i>001</i>,00,001,…,<i>H0011ｲ</i>
+  </div>
+  <div class="keys">
+    <div><span>項3</span>診療行為コード</div>
+    <div><span>項8</span>データ規格＝単位</div>
+    <div><span>項12</span>245点</div>
+    <div><span>項31</span>下限 1単位</div>
+    <div><span>項32</span>上限 9単位</div>
+    <div><span>項35</span>超過時は上限で計算</div>
+    <div><span>項72</span>施設基準 732</div>
+    <div><span>項85</span>区分の英字 H</div>
+    <div><span>項92</span>区分の数字 001</div>
+    <div><span>項117</span>点数表区分番号</div>
+  </div>
+</div>
+
+<section>
+  <h2>収蔵品</h2>
+  <p class="sub">医科診療行為は令和6年度版（2026年5月31日まで適用）の2026年5月1日更新、傷病名等は2026年6月1日更新。いずれも cp932、カンマ区切り、ヘッダ行なし。</p>
+  <table>
+    <tr><th>ファイル</th><th>中身</th><th class="n">行</th><th class="n">列</th></tr>
+    <tr><td class="mono">s_20260501.csv</td><td>医科診療行為マスター</td><td class="n">10,192</td><td class="n">150</td></tr>
+    <tr><td class="mono">b_20260601.txt</td><td>傷病名マスター</td><td class="n">27,684</td><td class="n">46</td></tr>
+    <tr><td class="mono">hb_20260601.txt</td><td>旧傷病名管理ファイル（廃止病名）</td><td class="n">8,032</td><td class="n">46</td></tr>
+    <tr><td class="mono">ikou_20260601.txt</td><td>移行対応テーブル</td><td class="n">8,032</td><td class="n">7</td></tr>
+    <tr><td class="mono">z_20260601.txt</td><td>修飾語マスター</td><td class="n">2,390</td><td class="n">19</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>行為は消え、病名は残る</h2>
+  <p class="sub">同じシステムの中で、廃止の扱いが正反対になっている</p>
+
+  <p>診療行為マスターの仕様書には、廃止コードは「次回のマスター更新時に削除する」と書いてある。
+  実際、2020年公開の資料に載っていた脳血管疾患等リハのコード
+  <code>180033910</code> は、現行10,192行のどこにも無い。跡形もなく消えている。</p>
+
+  <p>傷病名は逆で、廃止されると旧傷病名管理ファイルに移され、移行対応テーブルで転送先まで示される。
+  8,032件が墓場に整然と並んでいる。</p>
+
+  <table>
+    <caption>廃止病名8,032件の行き先</caption>
+    <tr><th>状態</th><th class="n">件数</th><th>備考</th></tr>
+    <tr><td>移行先あり</td><td class="n">6,037</td><td>全件が現行マスターに実在</td></tr>
+    <tr class="void"><td>移行先なし</td><td class="n">1,995</td><td>置き換わる病名が無い</td></tr>
+  </table>
+
+  <div class="figure">
+    <b>0</b>
+    <small><span class="tag fact">観測</span>多段移行の件数。「移行先もすでに廃止されていた」が1件も無い。
+    このスナップショットでは、非NULLの移行先は1回で現行マスターに着く。
+    その整合性が手作業か自動処理かは、このデータだけでは判断できない。</small>
+  </div>
+
+  <p class="note warn"><span class="tag inference">仮説</span>病名は旧称から現行名への移行が
+  必要なため履歴を別ファイルで保持し、診療行為は別の更新方針を採っている可能性がある。
+  なぜ設計が分かれたかは、配布ファイルの集計だけでは確定できない。</p>
+</section>
+
+<section>
+  <h2>ICDへの対応は一方通行</h2>
+  <p class="sub">対応表があることと、対応が取れていることは別物</p>
+
+  <p>傷病名マスターは1レコードの中にICD-10とMEDIS側のコードを内蔵している。
+  病名管理番号と病名交換用コードは27,684件すべてに入っていて、行きの接続はほぼ完全。</p>
+
+  <table>
+    <caption>ICD-10（2013）の付与状況</caption>
+    <tr><th>状態</th><th class="n">件数</th><th>例</th></tr>
+    <tr><td>ICDが1つ</td><td class="n">26,180</td><td></td></tr>
+    <tr><td>ICDが2つに割れる</td><td class="n">1,482</td><td>１型糖尿病黄斑症 → E103＋H360</td></tr>
+    <tr class="void"><td>ICDなし</td><td class="n">22</td><td>未コード化傷病名 ほか</td></tr>
+  </table>
+
+  <p>2つに割れるのは、基礎疾患と症状発現を別の列に持つ設計による。
+  JP CoreのCondition.codeが複数のコード体系を同時に推奨しているのは、この下地の上にある。</p>
+
+  <div class="figure void">
+    <b>476</b>
+    <small>ICD-10 <code>T888</code> ひとつに集まる病名の数。中身は
+    「４分の３冠脱離」「５分の４冠過高」といった歯科補綴物の不具合で、
+    日本の請求粒度がICDに存在しないため、受け皿コードにまとめて落ちている。</small>
+  </div>
+
+  <p>27,684の病名が7,766のICDコードに写る。平均3.6対1。
+  レセ電からICDは参照できるが、<b>ICDから日本の傷病名コードを一意に逆引きできない</b>。
+  ICDだけを保存すると、元の請求粒度を復元できない。</p>
+</section>
+
+<section>
+  <h2>言い方が一本に寄せられた記録</h2>
+  <p class="sub">移行対応テーブルは、用語標準化そのもの</p>
+
+  <p>移行先6,037件は、4,410のコードに集約されている。
+  2件以上が1つに集まるケースが1,052件。同じものを指す別表記が統合された跡。</p>
+
+  <table>
+    <caption>集約の例</caption>
+    <tr><th>集約先</th><th class="n">件</th><th>集まった旧病名</th></tr>
+    <tr><td>単純性血管腫</td><td class="n">9</td><td>ぶどう酒様血管腫／ポートワインステイン／ポートワイン血管腫／ポートワイン母斑／火焔状血管腫 ほか</td></tr>
+    <tr><td>神経因性膀胱</td><td class="n">8</td><td>神経因性膀胱機能障害／神経因性膀胱障害／神経性膀胱 ほか</td></tr>
+    <tr><td>頚肩腕症候群</td><td class="n">8</td><td>肩頚腕症／項肩腕症候群／頚肩症候群／頚部上腕症候群／頚腕症 ほか</td></tr>
+  </table>
+
+  <div class="figure">
+    <b>6,004</b>
+    <small><span class="tag fact">観測</span>廃止年月日が2003年5月31日の病名数。
+    廃止8,032件の75%がこの日に集中している。標準病名マスターとの統一作業との関係は
+    当時資料による追加確認が必要。</small>
+  </div>
+
+  <p class="note">廃止年月日に <b>2027年5月31日</b> が68件ある。すでに廃止予定日が入っている病名で、
+  移行期間つきの廃止という運用が読み取れる。</p>
+</section>
+
+<section>
+  <h2>コード帯と分類に偏りがある</h2>
+  <p class="sub">修飾語マスター2,390件の観察</p>
+
+  <p>仕様書は修飾語コードについて「特に意味を持たない重複しない4桁」と書いている。
+  ところが先頭桁と意味分類は、6000番台まではほぼ一致している。</p>
+
+  <table>
+    <caption>コード帯（先頭桁）× 修飾語区分</caption>
+    <tr><th>帯</th><th>ほぼ占める分類</th><th class="n">件数</th><th>混在</th></tr>
+    <tr><td class="mono">1000</td><td>部位</td><td class="n">929</td><td>ほぼ無し</td></tr>
+    <tr><td class="mono">3000</td><td>病因</td><td class="n">166</td><td>ほぼ無し</td></tr>
+    <tr><td class="mono">5000</td><td>状態表現</td><td class="n">201</td><td>ほぼ無し</td></tr>
+    <tr class="void"><td class="mono">7000</td><td>—</td><td class="n">642</td><td>部位283・その他206・状態60・病因42…全種混在</td></tr>
+    <tr><td class="mono">8000</td><td>接尾語</td><td class="n">301</td><td>無し（規則どおり）</td></tr>
+  </table>
+
+  <p><span class="tag fact">観測</span>7000番台だけが複数分類の混在帯になっている。
+  8000番台の接尾語は301件すべて同じ分類だった。</p>
+  <p class="note warn"><span class="tag inference">仮説</span>初期の採番に分類上の偏りがあり、
+  後から追加された語が7000番台へ集まった可能性がある。採番方針の変遷は仕様書・当時資料で未確認。</p>
+
+  <div class="figure">
+    <b>0</b>
+    <small>廃止された修飾語の件数。2,390件すべてが現行。
+    病名が8,032件も墓場に送られているのと対照的で、部位や状態の言葉は捨てられない。</small>
+  </div>
+</section>
+
+<section>
+  <h2>単独では書けない病名</h2>
+  <p class="sub">制度が「情報として不完全」と定義しているもの</p>
+
+  <p>傷病名マスターには、部位等の修飾語なしでは記録を禁止されている病名が31件ある。</p>
+
+  <p class="mono" style="font-size:13.5px;line-height:2.1;color:var(--ink-soft)">
+  ＡＶＭ／悪性腫瘍／<b style="color:var(--shu)">運動麻痺</b>／痂皮／感染症患者接触／外傷／丘疹／血腫／紅色丘疹／<b style="color:var(--shu)">骨折</b>／腫瘍／重症心身障害／人工関節／人工血管移植後／性器結核／<b style="color:var(--shu)">脊椎骨折</b>／<b style="color:var(--shu)">損傷</b>／胆道結石／唾液腺癌／<b style="color:var(--shu)">打撲傷</b>／尿道腫瘤／粘膜下腫瘍／脳欠損／針刺し事故／被角血管腫／泌尿器結核／皮膚良性リンパ腺腫症／<b style="color:var(--shu)">不顕性骨折</b>／吻合部狭窄／末期癌／リンパ瘤</p>
+
+  <p>リハビリの現場で毎日見る病名が、ここに集まっている。
+  「運動麻痺」だけでは記録できず、部位の修飾語が必須。
+  なお部位側の修飾語に「麻痺」を含むものは0件で、
+  <b>麻痺は病名、部位は修飾語</b>と役割がきれいに分かれている。</p>
+
+  <div class="figure">
+    <b>66,164,760</b>
+    <small>27,684病名 × 2,390修飾語の単純な直積。これは有効な臨床病名の件数ではない。
+    すべての組み合わせが意味的・請求上有効とは限らないが、病名が修飾語との組み合わせで
+    表現される構造を示す理論値として掲載する。</small>
+  </div>
+</section>
+
+<section>
+  <h2>単位で数えるもの</h2>
+  <p class="sub">診療行為マスター10,192件のうち172件</p>
+
+  <p>項番8のデータ規格コードが <code>28</code>（単位）の行は172件。
+  うち171件がリハビリ、残る1件は集団コミュニケーション療法料だった。
+  コード28の由来までは、この集計から判断しない。</p>
+
+  <table>
+    <caption>単位系172件の内訳（項番85＋92から復元した区分番号）</caption>
+    <tr><th>区分</th><th>名称</th><th class="n">件数</th></tr>
+    <tr><td class="mono">H001</td><td>脳血管疾患等リハビリテーション料</td><td class="n">104</td></tr>
+    <tr><td class="mono">H002</td><td>運動器リハビリテーション料</td><td class="n">40</td></tr>
+    <tr><td class="mono">H000</td><td>心大血管疾患リハビリテーション料</td><td class="n">13</td></tr>
+    <tr><td class="mono">H003</td><td>呼吸器リハビリテーション料</td><td class="n">8</td></tr>
+    <tr><td class="mono">H007</td><td>障害児（者）リハビリテーション料</td><td class="n">4</td></tr>
+    <tr><td class="mono">C006</td><td>在宅患者訪問リハビリテーション指導管理料</td><td class="n">2</td></tr>
+    <tr><td class="mono">H008</td><td>摂食機能療法</td><td class="n">1</td></tr>
+  </table>
+
+  <h3><em>項番32</em>上限は入っている。ただし患者側だけ</h3>
+
+  <p>きざみ上限値に、患者1人あたりの1日上限が入っている。165件が <code>9</code>。
+  一方、従事者1人あたりの18単位／日・108単位／週は、150列のどこにも無い。</p>
+
+  <table>
+    <tr><th>軸</th><th>上限</th><th>在り処</th></tr>
+    <tr><td>患者1人あたり</td><td>1日9単位</td><td>項番32（機械可読）</td></tr>
+    <tr class="void"><td>従事者1人あたり</td><td>1日18単位・週108単位</td><td>マスターに無い（通知で規定）</td></tr>
+  </table>
+
+  <p class="note warn"><span class="tag fact">仕様</span><b>エラー処理コード1では上限値による点数算定式が使われる。</b>
+  上下限エラー処理は170件が <code>1</code>。令和8年度版仕様説明書の計算表では、
+  上限超過時に上限値を用いる「点数算定式2」が適用される。実際の請求画面で利用者へ
+  どのような通知が出るかは、マスターだけでは判断できない。</p>
+
+  <h3><em>項番72〜81</em>施設基準は連言標準形</h3>
+
+  <p>10枠が3グループに分かれ、グループ内はOR、グループ間はANDになる。
+  ただし実データではグループ①しか使われておらず、実質ORだけが効いている。</p>
+
+  <p>運動器リハビリテーション料（Ⅲ）は
+  <code>830 or 828 or 829</code>。Ⅲの届出でも、ⅠかⅡの届出でも算定できる。
+  上位基準が下位を包含する構造で、点数表を読んでも一目では分からず、
+  マスターの3枠を見て初めて構造として見える。</p>
+</section>
+
+<section>
+  <h2>今回のマスター内の空白</h2>
+  <p class="sub">分析したファイルに直接の対応列が見つからなかった領域</p>
+
+  <table>
+    <tr><th>対象</th><th>レセ電</th><th>国際分類</th><th>接続</th></tr>
+    <tr><td>病名</td><td>傷病名コード7桁</td><td>ICD-10</td><td>マスター内に対応列</td></tr>
+    <tr><td>診療行為</td><td>診療行為コード9桁</td><td>—</td><td>150列に外部体系の列が1つも無い</td></tr>
+    <tr class="void"><td>評価尺度</td><td>コードなし</td><td>なし</td><td>—</td></tr>
+    <tr class="void"><td>生活機能</td><td>—</td><td>ICF</td><td>医療コード側と接点なし</td></tr>
+  </table>
+
+  <p>傷病名マスターにはICD-10列がある一方、分析した診療行為マスターには外部分類への列がなく、
+  評価尺度やICFとの直接対応も確認できなかった。これは他のコード体系や標準に対応が存在しない、
+  という意味ではない。</p>
+
+  <p>レセプト電算マスターは「何を何単位算定するか」を機械可読にするが、
+  <b>実施後の臨床アウトカムを表現する構造は、このマスターの射程外にある。</b></p>
+</section>
+
+<footer>
+  <p>一次資料：厚生労働省
+  <a href="https://shinryohoshu.mhlw.go.jp/shinryohoshu/downloadMenu/">診療報酬情報提供サービス</a>／
+  <a href="https://shinryohoshu.mhlw.go.jp/shinryohoshu/file/spec/R08rec3.pdf">令和8年度版マスターファイル仕様説明書（ファイルレイアウト）</a>。</p>
+  <p>集計値は配布ファイルから算出。解釈・仮説はラベルを付け、数値的な観測と分離した。
+  区分番号・施設基準の日本語名称は手入力で、全件の原典突合は未完了。</p>
+  <p>再現手順はリポジトリのREADMEを参照。</p>
+</footer>
+
+</div>
+</body>
+</html>
