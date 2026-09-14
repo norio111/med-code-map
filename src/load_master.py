@@ -24,13 +24,17 @@ CODE_SYSTEM = (
 )
 
 # 名称は基本マスターに存在しないため、点数表との照合状態を verified=0 で保持する。
+# 区分番号は英字（項番85）＋数字（項番92）＋枝番号（項番93）で識別する。
+# 枝番号を無視すると H001 と H001-2 が同じ区分に潰れる。
 KUBUN_NAME = {
     "H000": "心大血管疾患リハビリテーション料",
     "H001": "脳血管疾患等リハビリテーション料",
+    "H001-2": "廃用症候群リハビリテーション料",
     "H002": "運動器リハビリテーション料",
     "H003": "呼吸器リハビリテーション料",
     "H007": "障害児（者）リハビリテーション料",
-    "H008": "摂食機能療法",
+    "H007-2": "がん患者リハビリテーション料",
+    "H008": "集団コミュニケーション療法料",
     "C006": "在宅患者訪問リハビリテーション指導管理料",
 }
 
@@ -188,8 +192,12 @@ def build_database(args: argparse.Namespace) -> None:
 
             alpha = row[col(85)].strip()
             digits = row[col(92)].strip()
+            branch = row[col(93)].strip()
             if alpha not in ("", "*", "-") and digits:
                 kubun_number = alpha + digits
+                if not blank(branch):
+                    # 項番93は枝番号。H001-2（廃用症候群リハ）を H001 と潰さない。
+                    kubun_number = f"{kubun_number}-{int(branch)}"
                 kubun_rows.setdefault(
                     kubun_number,
                     (
