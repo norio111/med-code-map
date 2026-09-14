@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import shutil
 import sqlite3
 import tempfile
 from pathlib import Path
@@ -105,10 +106,15 @@ def build_database(args: argparse.Namespace) -> None:
 
     destination = args.output_db.resolve()
     destination.parent.mkdir(parents=True, exist_ok=True)
-    if destination.exists():
+    if destination.exists() and not args.append:
         raise FileExistsError(
             f"出力先が既に存在します: {destination}\n"
-            "既存DBを保護するため上書きしません。別名を指定してください。"
+            "既存DBを保護するため上書きしません。別名を指定するか、"
+            "改定を追加するなら --append を付けてください。"
+        )
+    if args.append and not destination.exists():
+        raise FileNotFoundError(
+            f"--append の追加先が存在しません: {destination}"
         )
 
     tmp_file = tempfile.NamedTemporaryFile(
@@ -119,12 +125,25 @@ def build_database(args: argparse.Namespace) -> None:
     )
     tmp_path = Path(tmp_file.name)
     tmp_file.close()
+    # 追加時も、作業用の複製へ書いてから差し替える。途中で失敗しても既存DBは残る。
+    if args.append:
+        shutil.copy2(destination, tmp_path)
 
     connection: sqlite3.Connection | None = None
     try:
         connection = sqlite3.connect(tmp_path)
         connection.execute("PRAGMA foreign_keys=ON")
-        connection.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
+        if args.append:
+            existing = connection.execute(
+                "SELECT 1 FROM revision WHERE revision_id=?", (args.revision_id,)
+            ).fetchone()
+            if existing:
+                raise ValueError(
+                    f"改定 {args.revision_id} は既に取り込まれています。"
+                    "取り込み直す場合は別のDBを作成してください。"
+                )
+        else:
+            connection.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
 
         kubun_rows: dict[str, tuple] = {}
         kijun_rows: dict[str, tuple] = {}
@@ -140,6 +159,7 @@ def build_database(args: argparse.Namespace) -> None:
                 (
                     1,
                     code,
+                    args.revision_id,
                     row[col(5)],
                     row[col(113)] or None,
                     row[col(8)] or None,
@@ -157,6 +177,7 @@ def build_database(args: argparse.Namespace) -> None:
                     (
                         1,
                         code,
+                        args.revision_id,
                         int(row[col(31)] or 0),
                         int(row[col(32)] or 0),
                         int(row[col(33)] or 0),
@@ -221,7 +242,7 @@ def build_database(args: argparse.Namespace) -> None:
             )
             connection.execute(
                 """
-                INSERT INTO codesystem (
+                INSERT OR IGNORE INTO codesystem (
                     cs_id, master_type, name, fhir_uri, authority, code_format
                 ) VALUES (?,?,?,?,?,?)
                 """,
@@ -230,19 +251,19 @@ def build_database(args: argparse.Namespace) -> None:
             connection.executemany(
                 """
                 INSERT INTO code_item (
-                    cs_id, code, display_short, display_full, unit_code,
-                    unit_name, point_kind, point, kokuji_kind,
+                    cs_id, code, revision_id, display_short, display_full,
+                    unit_code, unit_name, point_kind, point, kokuji_kind,
                     changed_on, abolished_on
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?)
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
                 """,
                 items,
             )
             connection.executemany(
                 """
                 INSERT INTO code_quantity_rule (
-                    cs_id, code, lower_value, upper_value,
+                    cs_id, code, revision_id, lower_value, upper_value,
                     step_value, step_point, error_handling
-                ) VALUES (?,?,?,?,?,?,?)
+                ) VALUES (?,?,?,?,?,?,?,?)
                 """,
                 quantity_rules,
             )
@@ -256,7 +277,7 @@ def build_database(args: argparse.Namespace) -> None:
             )
             connection.executemany(
                 """
-                INSERT INTO facility_kijun (
+                INSERT OR IGNORE INTO facility_kijun (
                     kijun_code, name, is_meyose
                 ) VALUES (?,?,?)
                 """,
@@ -295,7 +316,8 @@ def build_database(args: argparse.Namespace) -> None:
     print(f"kubun: {len(kubun_rows)} / facility_kijun: {len(kijun_rows)}")
     if unknown_kijun:
         print("名称未登録の施設基準コード:", sorted(unknown_kijun))
-    print(f"検証済みDBを作成しました: {destination}")
+    verb = "へ改定を追加しました" if args.append else "を作成しました"
+    print(f"検証済みDB{verb}: {destination}（{args.revision_id}）")
 
 
 def parse_args() -> argparse.Namespace:
@@ -303,6 +325,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("master", type=Path, help="医科診療行為マスター（cp932）")
     parser.add_argument("output_db", type=Path, help="新規作成するSQLite DB")
     parser.add_argument("--all", action="store_true", help="全件を取り込む")
+    parser.add_argument(
+        "--append",
+        action="store_true",
+        help="既存DBへこの改定を追加する（同じ改定IDが既にあれば中止）",
+    )
     parser.add_argument("--revision-id", required=True, help="例: R06")
     parser.add_argument("--revision-label", required=True, help="改定の表示名")
     parser.add_argument("--effective-from", required=True, help="YYYY-MM-DD")

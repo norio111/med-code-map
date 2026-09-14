@@ -23,8 +23,8 @@ have AS (
   GROUP BY 1,2,3)
 SELECT COUNT(*) AS 施設基準条件を満たすコード数
 FROM code_item i
-LEFT JOIN need n ON n.cs_id=i.cs_id AND n.code=i.code
-LEFT JOIN have h ON h.cs_id=i.cs_id AND h.code=i.code
+LEFT JOIN need n ON n.cs_id=i.cs_id AND n.code=i.code AND n.revision_id=i.revision_id
+LEFT JOIN have h ON h.cs_id=i.cs_id AND h.code=i.code AND h.revision_id=i.revision_id
 WHERE n.groups_needed IS NULL
    OR COALESCE(h.groups_met,0) = n.groups_needed;
 
@@ -39,9 +39,10 @@ have AS (
 SELECT i.code, substr(i.display_short,1,40) AS 名称, i.point AS 点数,
        q.upper_value AS 上限単位
 FROM code_item i
-LEFT JOIN need n ON n.cs_id=i.cs_id AND n.code=i.code
-LEFT JOIN have h ON h.cs_id=i.cs_id AND h.code=i.code
+LEFT JOIN need n ON n.cs_id=i.cs_id AND n.code=i.code AND n.revision_id=i.revision_id
+LEFT JOIN have h ON h.cs_id=i.cs_id AND h.code=i.code AND h.revision_id=i.revision_id
 LEFT JOIN code_quantity_rule q ON q.cs_id=i.cs_id AND q.code=i.code
+                              AND q.revision_id=i.revision_id
 WHERE n.gn IS NULL OR COALESCE(h.gm,0) = n.gn
 LIMIT 6;
 
@@ -64,5 +65,6 @@ GROUP BY group_no;
 -- [7] 施設基準を2つ以上OR で並べているコード（グループ①内の複数枠）
 SELECT i.code, substr(i.display_short,1,34) AS 名称,
        GROUP_CONCAT(r.kijun_code,' or ') AS いずれか
-FROM code_facility_req r JOIN code_item i ON i.cs_id=r.cs_id AND i.code=r.code
-WHERE r.group_no=1 GROUP BY r.code HAVING COUNT(*)>=3 LIMIT 5;
+FROM code_facility_req r JOIN code_item i
+  ON i.cs_id=r.cs_id AND i.code=r.code AND i.revision_id=r.revision_id
+WHERE r.group_no=1 GROUP BY r.revision_id, r.code HAVING COUNT(*)>=3 LIMIT 5;

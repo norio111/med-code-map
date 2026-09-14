@@ -1,10 +1,12 @@
 -- =====================================================================
--- med-code-map : 対応表スキーマ v0.2
+-- med-code-map : 対応表スキーマ v0.3
 --   レセプト電算処理システムの医科診療行為・傷病名マスターを、
 --   区分番号や ICD-10 と混同せず別軸で保持するための PoC。
 --
---   現段階は単一スナップショットの取込を対象とする。同じコードの時系列差分を
---   1 DB に併存させる版管理スキーマは未実装（docs/limitations.md 参照）。
+--   v0.3 で診療行為側を複数改定の併存に対応させた。点数・きざみ規則は改定で
+--   変わるため、code_item と code_quantity_rule の識別子へ revision_id を加えた。
+--   同じコードが改定をまたいで別の点数を持つことを、上書きせずに保持する。
+--   傷病名側（disease）は単一スナップショットのままで、版管理は未実装。
 -- =====================================================================
 
 PRAGMA foreign_keys = ON;
@@ -38,6 +40,7 @@ CREATE TABLE codesystem (
 CREATE TABLE code_item (
     cs_id           INTEGER NOT NULL REFERENCES codesystem(cs_id),
     code            TEXT    NOT NULL,       -- 項番3  診療行為コード（9桁）
+    revision_id     TEXT    NOT NULL REFERENCES revision(revision_id),
     display_short   TEXT    NOT NULL,       -- 項番5  省略漢字名称
     display_full    TEXT,                   -- 項番113 基本漢字名称
     unit_code       TEXT,                   -- 項番8  データ規格コード（28=単位）
@@ -47,7 +50,7 @@ CREATE TABLE code_item (
     kokuji_kind     TEXT,                   -- 項番68 告示等識別区分(1)
     changed_on      TEXT,                   -- 項番87 変更年月日（YYYYMMDD、原文保持）
     abolished_on    TEXT,                   -- 項番88 廃止年月日（99999999=現行）
-    PRIMARY KEY (cs_id, code)
+    PRIMARY KEY (cs_id, code, revision_id)
 );
 
 -- ---------------------------------------------------------------------
@@ -58,13 +61,15 @@ CREATE TABLE code_item (
 CREATE TABLE code_quantity_rule (
     cs_id           INTEGER NOT NULL,
     code            TEXT    NOT NULL,
+    revision_id     TEXT    NOT NULL,
     lower_value     INTEGER,                -- 項番31 下限値
     upper_value     INTEGER,                -- 項番32 上限値
     step_value      INTEGER,                -- 項番33 きざみ値
     step_point      REAL,                   -- 項番34 きざみ点数
     error_handling  TEXT,                   -- 項番35 上下限エラー処理 0-3
-    PRIMARY KEY (cs_id, code),
-    FOREIGN KEY (cs_id, code) REFERENCES code_item(cs_id, code) ON DELETE CASCADE
+    PRIMARY KEY (cs_id, code, revision_id),
+    FOREIGN KEY (cs_id, code, revision_id)
+        REFERENCES code_item(cs_id, code, revision_id) ON DELETE CASCADE
 );
 
 -- ---------------------------------------------------------------------
@@ -95,7 +100,8 @@ CREATE TABLE code_kubun_map (
     item_no         TEXT,                   -- 項番94 項番
     kubun_text      TEXT,                   -- 項番117 点数表区分番号（原文）
     PRIMARY KEY (cs_id, code, revision_id),
-    FOREIGN KEY (cs_id, code)            REFERENCES code_item(cs_id, code) ON DELETE CASCADE,
+    FOREIGN KEY (cs_id, code, revision_id)
+        REFERENCES code_item(cs_id, code, revision_id) ON DELETE CASCADE,
     FOREIGN KEY (kubun_no, revision_id)  REFERENCES kubun(kubun_no, revision_id)
 );
 
@@ -125,7 +131,8 @@ CREATE TABLE code_facility_req (
     slot_no         INTEGER NOT NULL,       -- 項番72=1 … 項番81=10
     kijun_code      TEXT    NOT NULL REFERENCES facility_kijun(kijun_code),
     PRIMARY KEY (cs_id, code, revision_id, slot_no),
-    FOREIGN KEY (cs_id, code) REFERENCES code_item(cs_id, code) ON DELETE CASCADE
+    FOREIGN KEY (cs_id, code, revision_id)
+        REFERENCES code_item(cs_id, code, revision_id) ON DELETE CASCADE
 );
 
 -- ---------------------------------------------------------------------

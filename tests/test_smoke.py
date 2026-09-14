@@ -115,6 +115,7 @@ class LoaderSmokeTest(unittest.TestCase):
                 effective_to=None,
                 expected_total_rows=1,
                 expected_selected_rows=1,
+                append=False,
             )
             load_master.build_database(master_args)
             load_disease.build_database(
@@ -149,6 +150,126 @@ class LoaderSmokeTest(unittest.TestCase):
                 connection.executescript(
                     (ROOT / "sql" / "queries.sql").read_text(encoding="utf-8")
                 )
+
+
+class RevisionDiffTest(unittest.TestCase):
+    """同じコードの2改定を1DBへ入れ、差分クエリが変化を拾えることを確かめる。"""
+
+    def _row(self, code: str, point: str, name: str) -> dict[int, str]:
+        return {
+            2: "S",
+            3: code,
+            5: name,
+            8: "28",
+            10: "単位",
+            11: "3",
+            12: point,
+            30: "1",
+            31: "1",
+            32: "9",
+            33: "1",
+            34: point,
+            35: "1",
+            68: "1",
+            72: "732",
+            85: "H",
+            87: "20260601",
+            88: "99999999",
+            90: "7",
+            91: "1",
+            92: "001",
+            94: "1",
+            113: name,
+            117: "H001",
+        }
+
+    def _args(self, master, database, revision_id, label, frm, to, append, rows):
+        return argparse.Namespace(
+            master=master,
+            output_db=database,
+            all=False,
+            revision_id=revision_id,
+            revision_label=label,
+            effective_from=frm,
+            effective_to=to,
+            expected_total_rows=rows,
+            expected_selected_rows=rows,
+            append=append,
+        )
+
+    def test_two_revisions_coexist_and_diff(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            old_master = tmp_path / "s_old.csv"
+            new_master = tmp_path / "s_new.csv"
+            database = tmp_path / "two.db"
+
+            # 旧版: 据え置きコードと、新版で消えるコード
+            write_cp932_rows(old_master, 150, [
+                self._row("180000001", "245.00", "架空リハ料"),
+                self._row("180000002", "100.00", "架空廃止予定リハ料"),
+            ])
+            # 新版: 点数が変わったコードと、新設コード
+            write_cp932_rows(new_master, 150, [
+                self._row("180000001", "255.00", "架空リハ料"),
+                self._row("180000003", "300.00", "架空新設リハ料"),
+            ])
+
+            load_master.build_database(self._args(
+                old_master, database, "OLD", "架空旧改定",
+                "2024-06-01", "2026-05-31", False, 2))
+            load_master.build_database(self._args(
+                new_master, database, "NEW", "架空新改定",
+                "2026-06-01", None, True, 2))
+
+            with closing(sqlite3.connect(database)) as connection:
+                connection.execute("PRAGMA foreign_keys=ON")
+                self.assertEqual(
+                    connection.execute("SELECT COUNT(*) FROM revision").fetchone()[0],
+                    2,
+                )
+                # 同じコードが2改定ぶん、別の点数で共存している
+                points = connection.execute(
+                    "SELECT revision_id, point FROM code_item"
+                    " WHERE code='180000001' ORDER BY revision_id"
+                ).fetchall()
+                self.assertEqual(points, [("NEW", 255.0), ("OLD", 245.0)])
+
+                diff = (ROOT / "sql" / "revision-diff.sql").read_text(encoding="utf-8")
+                params = {"old": "OLD", "new": "NEW"}
+                results = []
+                for statement in diff.split(";"):
+                    body = "\n".join(
+                        line for line in statement.splitlines()
+                        if line.strip() and not line.strip().startswith("--")
+                    )
+                    if not body.strip():
+                        continue
+                    results.append(
+                        connection.execute(statement, params).fetchall()
+                    )
+
+                added, removed, repriced = results[1], results[2], results[3]
+                self.assertEqual([r[0] for r in added], ["180000003"])
+                self.assertEqual([r[0] for r in removed], ["180000002"])
+                self.assertEqual(repriced[0][0], "180000001")
+                self.assertEqual(repriced[0][4], 10.0)
+
+    def test_same_revision_twice_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            master = tmp_path / "s.csv"
+            database = tmp_path / "one.db"
+            write_cp932_rows(master, 150, [self._row("180000001", "245.00", "架空リハ料")])
+
+            load_master.build_database(self._args(
+                master, database, "SAME", "架空改定", "2026-06-01", None, False, 1))
+            before = database.read_bytes()
+            with self.assertRaises(ValueError):
+                load_master.build_database(self._args(
+                    master, database, "SAME", "架空改定", "2026-06-01", None, True, 1))
+            # 失敗しても既存DBは元のまま
+            self.assertEqual(database.read_bytes(), before)
 
 
 if __name__ == "__main__":

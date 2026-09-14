@@ -41,9 +41,11 @@ med-code-map/
 │  └─ hash_sources.py        入力ファイルのSHA-256記録
 ├─ sql/
 │  ├─ schema.sql
-│  └─ queries.sql
+│  ├─ queries.sql
+│  └─ revision-diff.sql     改定差分（:old / :new を渡す）
 ├─ docs/
 │  ├─ design-notes.md
+│  ├─ revision-diff-R06-R08.md  令和6年度版→令和8年度版の差分
 │  ├─ data-sources.md
 │  ├─ evidence-map.md
 │  ├─ limitations.md
@@ -81,7 +83,22 @@ py src/load_master.py data/private/s_20260501.csv work/med-code-map.db `
   --expected-selected-rows 172
 ```
 
-既定では、データ規格コード28の172件だけを取り込みます。全件を対象にする場合は`--all`を付け、`--expected-selected-rows`も全件数へ変更します。
+既定では、データ規格コード28の行だけを取り込みます。全件を対象にする場合は`--all`を付け、`--expected-selected-rows`も全件数へ変更します。
+
+現行版（令和8年度改定、2026年6月1日施行）を同じDBへ追加するには`--append`を使います。
+
+```powershell
+py src/load_master.py data/private/s_20260911.csv work/med-code-map.db --append `
+  --revision-id R08 `
+  --revision-label "令和8年度診療報酬改定" `
+  --effective-from 2026-06-01 `
+  --expected-total-rows 11833 `
+  --expected-selected-rows 210
+```
+
+同じ改定IDが既に入っている場合は中止します。追加は既存DBの複製に対して行い、検証が通った場合だけ差し替えるため、途中で失敗しても元のDBは残ります。
+
+2版を取り込むと、改定で何が変わったかを`sql/revision-diff.sql`で引けます。名前付きパラメータ`:old` `:new`へ改定IDを渡して1文ずつ実行してください。
 
 ### 2. 同じDBへ傷病名と移行関係を追加する
 
