@@ -22,6 +22,27 @@
 
 可視化した読み物は「レセプト電算マスター図鑑」です。公開版は <https://norio111.github.io/med-code-map/> で読めます（ソースは [`index.html`](index.html)）。
 
+## 施設別の改定影響チェッカー（MVP）
+
+[`impact.html`](impact.html)を追加しました。脳血管・廃用・運動器のⅠ・Ⅱ・Ⅲ（9区分）を選択できます。収録は8制度項目。初期・急性期・データ提出加算のⅡ・Ⅲは要確認、総合計画評価料はⅢ単独では対象外です。令和6年度→令和8年度の比較で、判定は算定可否を保証しません。旧「リ減」と新「特定患者」は別項目として扱います。
+
+主張ごとの根拠ページ、年度別内容、点数・期間・コード構成、実務上の確認事項、選択区分別のコード明細を表示します。手入力した制度解釈と、マスターから機械抽出した属性を区別し、人の最終確認は未実施と明記しています。
+
+HTML・CSS・JavaScriptと生成済みデータのみで動くため、GitHub Pagesの静的構成を維持します。起動方法は2通りあります。
+
+1. **直接表示**：フォルダ全体を展開し、`impact.html`をダブルクリックします（`file:///`）。`assets/impact-data.js`と`assets/impact.js`を含むフォルダ構成を保ってください。
+2. **HTTP経由**：このフォルダで次を実行し、`http://localhost:8000/impact.html`を開きます。終了はCtrl+C。
+
+```powershell
+py -m http.server 8000 --bind 127.0.0.1
+```
+
+施設基準3件と比較改定が表示された後、施設基準を1つ以上選ぶと実行ボタンが有効になります。閲覧にSQLiteや公式CSVは不要です。
+
+`file:///`でJSONの`fetch()`が遮断される不具合を修正し、両起動方法とも生成済みの`assets/impact-data.js`を通常のscriptタグで読み込みます。JavaScriptやデータが欠落・破損した場合は、画面内に原因と復旧・起動方法を表示します。JavaScript無効時もHTMLの案内が残ります。
+
+データモデル・再生成方法・未収録範囲は[`docs/impact-design.md`](docs/impact-design.md)を参照してください。監査用の正本は`data/impact-catalog.json`です。`src/export_impact.py`が既存DBの機械抽出属性を結合し、同じデータから`assets/impact-data.json`と`assets/impact-data.js`を同時生成します。両生成物を手編集しないでください。DBテーブルの追加は行っていません。
+
 ## 重要な監査結果
 
 公開版を作る際、公式資料との再照合で旧版の誤りを2点修正しました。
@@ -136,15 +157,23 @@ py src/load_disease.py `
 
 ## テスト
 
-テストは架空の最小データを生成するため、公式マスターを必要としません。
+基本テストは架空の最小データと公開JSONで実行できます。`data/private/`に指定の両年度マスターがある場合は全件取込・H区分／単位系の実データ回帰も実行し、ない場合はそのテストだけskipします。
 
 ```powershell
 py -m unittest discover -s tests -v
+node --test tests/impact.test.cjs
+```
+
+実ブラウザでの検証（インストール済みMicrosoft Edgeを使用）：
+
+```powershell
+py -m pip install -r requirements-browser.txt
+py tests/browser_impact.py
 ```
 
 ## データの扱い
 
-公式配布ファイル、取得したPDF、生成DBはGit管理しません。公開リポジトリにはコード、スキーマ、出典、検証方法だけを置きます。入力ファイルの同一性は`hash_sources.py`で記録できます。
+公式配布ファイル、取得したPDF、生成DBはGit管理しません。公開リポジトリにはコード、スキーマ、出典、検証方法に加え、チェッカー用の制度注釈と必要範囲のコード属性JSONを置きます。名称・コードはマスターの値を保持し、編集判断は別フィールドにします。入力ファイルの同一性は`hash_sources.py`で記録できます。
 
 ```powershell
 py src/hash_sources.py data/private --output work/source-manifest.csv
@@ -152,7 +181,7 @@ py src/hash_sources.py data/private --output work/source-manifest.csv
 
 ## 現在の射程
 
-このPoCは、指定したスナップショットをDBへ取り込み、改定間で比較するところまでです。診療行為は複数の改定を併存できますが、傷病名は単一スナップショットのままです。告示・通知との完全な接続、医療機関の算定可否保証は対象外です。また、2版の比較で新しい版に無いコードが、廃止されたのか配布対象から外れたのかは区別できません。詳細は [`docs/limitations.md`](docs/limitations.md) を参照してください。
+指定したスナップショットのDB比較に加え、3疾患のⅠ〜Ⅲ（9区分、一部対応は要確認）に関係する制度変更候補を抽出するMVPを実装しています。診療行為は複数の改定を併存できますが、傷病名は単一スナップショットのままです。告示・通知との完全な接続、医療機関の算定可否保証は対象外です。また、2版の集合差だけでは法的な廃止を確定できません。詳細は [`docs/limitations.md`](docs/limitations.md) を参照してください。
 
 ## 一次資料
 
