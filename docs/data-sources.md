@@ -9,6 +9,16 @@
 - [正式通知・医科点数表（令和8年3月5日、0730訂正後）](https://www.mhlw.go.jp/content/12400000/001732089.pdf)：本文499–500、502–503、504–506。疾患別の関係を条件付きとする根拠。
 - [新設予定一覧](https://shinryohoshu.mhlw.go.jp/shinryohoshu/file/info/R08sshi_code260226.xlsx)・[廃止予定一覧](https://shinryohoshu.mhlw.go.jp/shinryohoshu/file/info/R08shaishi_code260226.xlsx)・[仕様説明書](https://shinryohoshu.mhlw.go.jp/shinryohoshu/file/spec/R08rec1.pdf)：既存監査の記録を再利用。予定一覧は確定資料として扱わない。
 
+## 疑義解釈検索ツール
+
+- 掲載ページ: https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/iryouhoken/newpage_21053.html
+- 直接URL（バージョンにより変わる。掲載ページから最新を確認すること）: https://www.mhlw.go.jp/content/12400000/Ver.1.1.4.xlsm
+- 形式: xlsm（マクロ付きExcel）。取込では「管理用」シートのみを読む
+- 収録範囲: 平成18年度改定〜（既知版では令和8年度改定その12まで、2026-09-02時点）
+- 版管理: ファイル名のVer番号。表紙シートの更新履歴に「Ver1.1.4. 令和８年度診療報酬改定の疑義解釈（その12）を追加」のように、Ver更新と追加内容の対応が明記される
+- 更新検知: [gigi-ver-watch](https://github.com/norio111/gigi-ver-watch) が掲載ページのVer番号を監視。Ver据え置きでの無断差し替えもHEADのメタ情報差分で検知する
+- 免責: 厚労省が「検索結果はご参考です」「分類は参考です」「図や表については掲載していません」と明記。一次資料はPDFの事務連絡本体
+
 主張単位のURL・ページ・要旨・確認状態はカタログの`evidence`を正とする。人による最終確認は未実施。
 
 ## 取得元
