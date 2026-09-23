@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>施設別の改定影響チェッカー | レセプト電算マスター図鑑</title>
+  <title>施設別の改定影響チェッカー | レセプト電算マスターを読み解く</title>
   <link rel="stylesheet" href="assets/impact.css">
   <script>
     // Kept in HTML so a missing/broken external script can still explain failure.
@@ -43,15 +43,15 @@
 <body>
 <div class="wrap">
   <header>
-    <a href="index.html">← レセプト電算マスター図鑑</a>
+    <a href="index.html">← レセプト電算マスターを読み解く</a>
     <p class="eyebrow">MED-CODE-MAP / 改定を読む</p>
-    <h1>自院に関係する<br>改定項目を確認する</h1>
-    <p class="lede">届出施設基準を選び、令和6年度から令和8年度への変更候補を、根拠とともに確認できます。</p>
+    <h1>令和8年度改定<br>施設基準別の変更点チェック</h1>
+    <p class="lede">脳血管・廃用・運動器のⅠ〜Ⅲから、届け出ているものを選んでください。関連する変更と根拠資料を表示します。</p>
     <p class="notice">算定可否を保証するものではありません。患者・実施条件や届出を原典で確認するための、学習・検証用MVPです。</p>
   </header>
   <main>
     <section aria-labelledby="choose-title">
-      <h2 id="choose-title">01 <span>自院の届出を選ぶ</span></h2>
+      <h2 id="choose-title">01 <span>届け出ている施設基準を選ぶ</span></h2>
       <p class="muted">脳血管・廃用・運動器のⅠ・Ⅱ・Ⅲ（9区分）を選択できます。収録は8制度項目。初期・急性期・データ提出加算のⅡ・Ⅲは要確認、総合計画評価料はⅢ単独では対象外です。選択情報はこのページ内だけで使い、保存・送信しません。</p>
       <div id="startup-help" class="notice" role="alert">
         <p id="startup-reason">データとJavaScriptの読み込み待ちです。この案内が消えない場合は、ファイルの不足・破損、またはJavaScriptの実行制限により初期化できていません。</p>
@@ -63,7 +63,7 @@
         <fieldset><legend>届出施設基準（複数選択）</legend><div id="facilities">読み込み待ちです。表示されない場合は上の起動案内をご確認ください。</div></fieldset>
         <label class="revision" for="comparison">比較する改定 <select id="comparison" name="comparison" disabled><option value="">読み込み待ち（上の起動案内を確認）</option></select></label>
         <label class="excluded"><input type="checkbox" id="excluded"> 選択区分の対象外として収録した変更も表示する</label>
-        <div class="actions"><button id="run" type="submit" disabled>自院に関係する変更を表示</button><button id="clear" type="button" class="secondary" disabled>選択を解除</button></div>
+        <div class="actions"><button id="run" type="submit" disabled>変更点を表示</button><button id="clear" type="button" class="secondary" disabled>選択を解除</button></div>
       </form>
     </section>
     <section aria-labelledby="result-title">
@@ -87,7 +87,7 @@
       <p><a href="docs/impact-design.md">設計と収録範囲</a> · <a href="docs/audit-log.md">監査ログ</a> · <a href="docs/limitations.md">制約</a></p>
     </section>
   </main>
-  <footer>レセプト電算マスター図鑑 / med-code-map</footer>
+  <footer>レセプト電算マスターを読み解く / med-code-map</footer>
 </div>
 </body>
 </html>
